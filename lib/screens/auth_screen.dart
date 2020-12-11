@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/auth.dart';
@@ -15,6 +18,7 @@ class _AuthScreenState extends State<AuthScreen> {
     String useremail,
     String userpassword,
     String username,
+    File image,
     bool isLogin,
     BuildContext ctx,
   ) async {
@@ -33,12 +37,20 @@ class _AuthScreenState extends State<AuthScreen> {
           email: useremail,
           password: userpassword,
         );
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('user_image')
+            .child(authResult.user.uid + '.jpg');
+        await ref.putFile(image);
+
+        final url = await ref.getDownloadURL();
         await FirebaseFirestore.instance
             .collection('users')
             .doc(authResult.user.uid)
             .set({
           'username': username,
           'useremail': useremail,
+          'image_url': url,
         });
       }
     } on Exception catch (err) {
@@ -53,13 +65,14 @@ class _AuthScreenState extends State<AuthScreen> {
           backgroundColor: Theme.of(ctx).errorColor,
         ),
       );
-    }catch (e) {
+    } catch (e) {
       print(e);
-    } 
+    }
     setState(() {
       _isLoading = false;
     });
   }
+
   @override
   void dispose() {
     super.dispose();

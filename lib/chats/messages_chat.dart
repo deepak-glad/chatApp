@@ -14,7 +14,7 @@ class Messages extends StatelessWidget {
             child: CircularProgressIndicator(),
           );
         }
-       return StreamBuilder(
+        return StreamBuilder(
             stream: FirebaseFirestore.instance
                 .collection('chat')
                 .orderBy('createdAt', descending: true)
@@ -35,6 +35,8 @@ class Messages extends StatelessWidget {
                   doc[index]['text'],
                   doc[index]['userId'] == futureSnapshot.data.uid,
                   // key: ValueKey(doc[index].documentId),
+                  doc[index]['username'],
+                  doc[index]['userImage'],
                 ),
               );
             });

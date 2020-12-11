@@ -1,12 +1,15 @@
+import 'dart:io';
+import 'package:chat_app/widgets/imagepicker.dart';
 import 'package:flutter/material.dart';
 
 class Auth extends StatefulWidget {
-  Auth(this.submitFn,this.isLoading);
+  Auth(this.submitFn, this.isLoading);
   final bool isLoading;
   final void Function(
     String email,
     String password,
     String userName,
+    File image,
     bool isLogin,
     BuildContext ctx,
   ) submitFn;
@@ -21,20 +24,36 @@ class _AuthState extends State<Auth> {
   var _userEmail = '';
   var _userName = '';
   var _userPassword = '';
+  File _userImageFile;
+
+  void _pickedImage(File image) {
+    _userImageFile = image;
+  }
 
   void _trySubmit() {
     final isValid = _formKey.currentState.validate();
     FocusScope.of(context).unfocus();
 
+    if (_userImageFile == null && !_isLogin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please upload image'),
+          backgroundColor: Theme.of(context).errorColor,
+        ),
+      );
+      return;
+    }
+
     if (isValid) {
       _formKey.currentState.save();
-     widget.submitFn(
-       _userEmail,
-       _userPassword,
-       _userName,
-       _isLogin,
-       context
-     );
+      widget.submitFn(
+        _userEmail,
+        _userPassword,
+        _userName,
+        _userImageFile,
+        _isLogin,
+        context,
+      );
     }
   }
 
@@ -51,7 +70,11 @@ class _AuthState extends State<Auth> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
+                  if (!_isLogin) UserImagePicker(_pickedImage),
                   TextFormField(
+                    autocorrect: false,
+                    textCapitalization: TextCapitalization.none,
+                    enableSuggestions: false,
                     key: ValueKey('email'),
                     validator: (value) {
                       if (value.isEmpty || !value.contains('@')) {
@@ -69,6 +92,9 @@ class _AuthState extends State<Auth> {
                   ),
                   if (!_isLogin)
                     TextFormField(
+                      autocorrect: true,
+                      enableSuggestions: true,
+                      textCapitalization: TextCapitalization.words,
                       key: ValueKey('username'),
                       validator: (value) {
                         if (value.isEmpty || value.length < 4) {
@@ -96,12 +122,12 @@ class _AuthState extends State<Auth> {
                     },
                   ),
                   SizedBox(height: 12),
-                  if(widget.isLoading) CircularProgressIndicator(),
-                  if(!widget.isLoading)
-                  RaisedButton(
-                    child: Text(_isLogin ? 'Login' : 'Signup'),
-                    onPressed: _trySubmit,
-                  ),
+                  if (widget.isLoading) CircularProgressIndicator(),
+                  if (!widget.isLoading)
+                    RaisedButton(
+                      child: Text(_isLogin ? 'Login' : 'Signup'),
+                      onPressed: _trySubmit,
+                    ),
                   FlatButton(
                     textColor: Theme.of(context).primaryColor,
                     child: Text(_isLogin
